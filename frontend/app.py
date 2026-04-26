@@ -1,7 +1,12 @@
 import streamlit as st
 import requests
+import os
 
-API_URL = "http://localhost:10000"
+# Determine API URL based on environment
+if os.getenv("ENVIRONMENT") == "production":
+    API_URL = "https://askmydocs-ad79.onrender.com"
+else:
+    API_URL = "http://localhost:10000"
 
 st.set_page_config(page_title="AskMyDocs", layout="wide")
 
