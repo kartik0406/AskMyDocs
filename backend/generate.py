@@ -1,13 +1,11 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-import google.generativeai as genai
+from google import genai
 from config import *
 
-genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel("gemini-2.5-flash")
-
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 def generate_answer(query, docs):
     context = "\n\n".join(docs[:5])
@@ -27,5 +25,9 @@ Question:
 Answer:
 """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
     return response.text

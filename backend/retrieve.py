@@ -3,11 +3,9 @@ load_dotenv()
 
 from elasticsearch import Elasticsearch
 from pinecone import Pinecone
-from langchain_huggingface import HuggingFaceEmbeddings
 from config import *
 import logging
 from uuid import uuid4
-from rerank import rerank   # 🔥 IMPORTANT
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,29 +16,29 @@ es = Elasticsearch(
 )
 
 # 🔹 Pinecone
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index = pc.Index(PINECONE_INDEX)
+pc = Pinecone(api_key=PINCONE_API_KEY)
+index = pc.Index(PINCONE_INDEX)
 
-# 🔹 Embedding
-embedding_model = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-small-en"
-)
 
 # ------------------------
-# Embeddings
+# SIMPLE TEXT EMBEDDING (LIGHTWEIGHT)
 # ------------------------
 
-def get_embeddings(texts):
-    return embedding_model.embed_documents(texts)
+def simple_embedding(text, dim=384):
+    vec = [float(hash(word) % 1000) for word in text.split()]
 
-def get_query_embedding(query):
-    return embedding_model.embed_query(query)
+    # 🔥 pad or trim to fixed size
+    if len(vec) < dim:
+        vec += [0.0] * (dim - len(vec))
+    else:
+        vec = vec[:dim]
 
+    return vec
 # ------------------------
 # BM25 Search
 # ------------------------
 
-def bm25_search(query, doc_id, k=15):
+def bm25_search(query, doc_id, k=10):
     try:
         res = es.search(
             index="docs",
@@ -61,16 +59,16 @@ def bm25_search(query, doc_id, k=15):
         ]
 
     except Exception as e:
-        logging.error(f"❌ Elastic failed: {e}")
+        logging.error(f"Elastic failed: {e}")
         return None
 
 # ------------------------
-# Vector Search
+# Vector Search (SAFE)
 # ------------------------
 
-def vector_search(query, doc_id, k=15):
+def vector_search(query, doc_id, k=10):
     try:
-        emb = get_query_embedding(query)
+        emb = simple_embedding(query)
 
         res = index.query(
             vector=emb,
@@ -79,79 +77,37 @@ def vector_search(query, doc_id, k=15):
             filter={"doc_id": doc_id}
         )
 
-        if not res.matches:
-            return []
-
         return [
             {"content": m["metadata"]["text"], "score": m["score"]}
             for m in res["matches"]
         ]
 
     except Exception as e:
-        logging.error(f"❌ Pinecone failed: {e}")
+        logging.error(f"Pinecone failed: {e}")
         return []
 
 # ------------------------
-# Normalize
+# Hybrid Search (NO RERANK)
 # ------------------------
 
-def normalize(scores):
-    if not scores:
-        return []
-
-    min_s, max_s = min(scores), max(scores)
-
-    if max_s == min_s:
-        return [1.0] * len(scores)
-
-    return [(s - min_s) / (max_s - min_s) for s in scores]
-
-# ------------------------
-# Hybrid Search + Rerank
-# ------------------------
-
-def hybrid_search(query, doc_id, k=15, alpha=0.5):
+def hybrid_search(query, doc_id, k=10, alpha=0.6):
     bm25_results = bm25_search(query, doc_id, k)
     vector_results = vector_search(query, doc_id, k)
 
-    if not bm25_results and not vector_results:
-        return []
-
     if bm25_results is None:
-        logging.warning("⚠️ Using VECTOR ONLY fallback")
         return [r["content"] for r in vector_results[:k]]
 
-    try:
-        bm25_scores = normalize([r["score"] for r in bm25_results])
-        vector_scores = normalize([r["score"] for r in vector_results])
+    combined = {}
 
-        combined = {}
+    for r in bm25_results:
+        combined[r["content"]] = r["score"]
 
-        for i, r in enumerate(bm25_results):
-            combined[r["content"]] = alpha * bm25_scores[i]
+    for r in vector_results:
+        combined[r["content"]] = combined.get(r["content"], 0) + r["score"]
 
-        for i, r in enumerate(vector_results):
-            if r["content"] in combined:
-                combined[r["content"]] += (1 - alpha) * vector_scores[i]
-            else:
-                combined[r["content"]] = (1 - alpha) * vector_scores[i]
+    sorted_results = sorted(combined.items(), key=lambda x: x[1], reverse=True)
 
-        sorted_results = sorted(
-            combined.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-
-        results = [c for c, _ in sorted_results[:k]]
-
-        # 🔥 RERANK HERE
-        results = rerank(query, results)
-
-        return results[:5]
-
-    except Exception as e:
-        logging.error(f"❌ Hybrid merge failed: {e}")
-        return [r["content"] for r in vector_results[:k]]
+    return [c for c, _ in sorted_results[:5]]
 
 # ------------------------
 # Index Documents
@@ -159,7 +115,6 @@ def hybrid_search(query, doc_id, k=15, alpha=0.5):
 
 def index_documents(chunks, doc_id):
     texts = [chunk.page_content for chunk in chunks]
-    embeddings = get_embeddings(texts)
 
     vectors = []
 
@@ -171,14 +126,14 @@ def index_documents(chunks, doc_id):
                 refresh=True
             )
         except Exception as e:
-            logging.error(f"❌ Elastic indexing failed: {e}")
+            logging.error(f"Elastic indexing failed: {e}")
 
         vectors.append({
             "id": f"{doc_id}_{i}_{uuid4()}",
-            "values": embeddings[i],
+            "values": simple_embedding(text),
             "metadata": {"text": text, "doc_id": doc_id}
         })
 
     if vectors:
         index.upsert(vectors=vectors)
-        logging.info(f"✅ Indexed {len(vectors)} chunks")
+        logging.info(f"Indexed {len(vectors)} chunks")
