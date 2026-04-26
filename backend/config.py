@@ -1,0 +1,12 @@
+import os
+
+# Elastic Cloud
+ELASTIC_CLOUD_ID = "My_Elasticsearch_project:dXMtY2VudHJhbDEuZ2NwLmVsYXN0aWMuY2xvdWQkZDVlYzJkNjg3MWMwNDllNThmYTRkNTBiNGMyNGFhZDIuZXMkZDVlYzJkNjg3MWMwNDllNThmYTRkNTBiNGMyNGFhZDIua2I="
+ELASTIC_API_KEY = "aVdrRXlaMEI3RFBjNTlrMmxJZC06cjFzaTE1MGU1blhjYldLMU8yYWlHZw=="
+
+# Pinecone
+PINECONE_API_KEY = "pcsk_5fqreR_QyaaDyCSBczdvrREYVYnSNYgvW3Ssro3UXuamfj1AX5tSFnDYiPe5CFTaDSsUqN"
+PINECONE_INDEX = "askmydocs"
+
+# GeminiAPI
+GEMINI_API_KEY="AIzaSyCuiRMzLtmkIjMbH5a12MYQPx4aeMEKOE4"
