@@ -16,8 +16,8 @@ es = Elasticsearch(
 )
 
 # 🔹 Pinecone
-pc = Pinecone(api_key=PINCONE_API_KEY)
-index = pc.Index(PINCONE_INDEX)
+pc = Pinecone(api_key=PINECONE_API_KEY)
+index = pc.Index(PINECONE_INDEX)
 
 
 # ------------------------
