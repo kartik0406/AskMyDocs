@@ -222,7 +222,10 @@ Open **http://localhost:8501** → Upload a PDF → Start asking questions!
 
 1. Go to [Streamlit Cloud](https://share.streamlit.io)
 2. Connect repo → set main file to `frontend/app.py`
-3. Add secret: `ENVIRONMENT=production`
+3. Go to **Settings → Secrets** and add:
+   ```toml
+   API_URL = "https://your-app.onrender.com"
+   ```
 4. Deploy → UI available at `https://your-app.streamlit.app`
 
 ---
@@ -236,7 +239,7 @@ Open **http://localhost:8501** → Upload a PDF → Start asking questions!
 | **Elasticsearch Cloud** | BM25 keyword search with fuzzy matching |
 | **Pinecone** | Vector database for semantic search |
 | **Google Gemini 2.5 Flash** | LLM for answer generation + reranking |
-| **Gemini text-embedding-004** | Embedding model (384-dim, API-based) |
+| **Gemini embedding-001** | Embedding model (384-dim via MRL truncation, API-based) |
 | **LangChain** | PDF loading + text splitting |
 | **Python 3.11** | Runtime |
 
@@ -251,6 +254,7 @@ Open **http://localhost:8501** → Upload a PDF → Start asking questions!
 | PDF upload fails | Check file isn't corrupted; ensure Elasticsearch index `docs` exists |
 | "No relevant information found" | Re-upload PDF (needed after embedding model changes) |
 | Slow first query | Gemini API cold start — subsequent queries are faster |
+| `ConnectionError` on Streamlit Cloud | `API_URL` secret not set — add it in Streamlit Cloud → Settings → Secrets |
 
 ---
 
