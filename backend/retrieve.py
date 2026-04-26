@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from elasticsearch import Elasticsearch
 from pinecone import Pinecone
 from langchain_huggingface import HuggingFaceEmbeddings

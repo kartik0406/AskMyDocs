@@ -10,3 +10,4 @@ langchain-huggingface
 sentence-transformers
 pypdf
 google-generativeai
+python-dotenv
