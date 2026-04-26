@@ -109,11 +109,13 @@ if st.session_state.docs:
 
                     st.markdown(answer)
 
-                    # Show sources expandable
+                    # Show sources expandable with numbered citations
                     if docs:
                         with st.expander("📚 Sources"):
-                            for d in docs:
-                                st.write(d)
+                            for i, d in enumerate(docs):
+                                st.markdown(f"**[Source {i+1}]**")
+                                st.caption(d[:500])
+                                st.divider()
 
                     # Save assistant response
                     st.session_state.messages.append({

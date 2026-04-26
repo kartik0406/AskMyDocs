@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
 import tempfile
 import os
@@ -14,6 +15,15 @@ from generate import generate_answer
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
+
+# CORS — allow Streamlit frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ------------------------
 # Health Check
@@ -44,10 +54,10 @@ def upload(file: UploadFile):
         if not documents:
             raise HTTPException(status_code=400, detail="Empty document")
 
-        # 🔥 IMPROVED CHUNKING
+        # 🔥 IMPROVED CHUNKING — larger chunks preserve context
         splitter = RecursiveCharacterTextSplitter(
-            chunk_size=300,
-            chunk_overlap=50
+            chunk_size=800,
+            chunk_overlap=200
         )
 
         chunks = splitter.split_documents(documents)
@@ -81,6 +91,10 @@ def ask(query: str, doc_id: str):
         logging.info(f"Doc ID: {doc_id}")
 
         docs = hybrid_search(query, doc_id)
+
+        logging.info(f"Retrieved {len(docs)} chunks:")
+        for i, d in enumerate(docs):
+            logging.info(f"  Chunk {i}: {d[:100]}...")
 
         if not docs:
             return {

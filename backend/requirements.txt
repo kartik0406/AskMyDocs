@@ -1,13 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
+gunicorn
 python-multipart
 elasticsearch
 pinecone
 langchain-community
 langchain-text-splitters
-langchain-huggingface
-
-sentence-transformers
 pypdf
 google-genai
 python-dotenv
