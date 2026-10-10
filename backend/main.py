@@ -1,3 +1,4 @@
+# AskMyDocs RAG backend (FastAPI): PDF upload/indexing, hybrid retrieval, and answer generation.
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, UploadFile, HTTPException
