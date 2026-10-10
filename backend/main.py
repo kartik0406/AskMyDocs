@@ -14,7 +14,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from retrieve import index_documents, hybrid_search
 from generate import generate_answer
 
-app = FastAPI()
+app = FastAPI()  # FastAPI application instance
 logging.basicConfig(level=logging.INFO)
 
 # CORS — allow Streamlit frontend
